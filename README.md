@@ -54,7 +54,7 @@ Creating conda environment
 conda create --name ppi
 conda activate ppi
 conda install -c anaconda jupyter 
-pip install pandas, numpy, seaborn, networkx, upsetplot, matplotlib, goatools
+pip install pandas numpy seaborn networkx upsetplot matplotlib goatools
 ```
 
 # Running the analysis workflow
