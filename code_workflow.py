@@ -475,7 +475,7 @@ def main_make_coexpression_clusters():
         print(final_df.shape)
         # Sort by correlation so when dropping duplicates keep highest correlation
         final_df = final_df.sort_values("corr", ascending=False)
-        final_df = final_df.drop_duplicates(["source", "target"])
+        final_df = final_df.drop_duplicates(["source", "target", "cluster"])
         print(final_df.shape)
         final_df.to_csv("output/coexpression/{}.coexp.csv".format(network), index=None)
 
