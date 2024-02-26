@@ -75,7 +75,7 @@ python app.py
 
 Once the Dash PanPPI webapplication is running, access it on your browser through the follwoing link: [http://127.0.0.1:8000/](http://127.0.0.1:8000/).
 
-![screenshot_datainput](dash/img/screenshot_dash_app.png)
+![screenshot_datainput](Dash/img/screenshot_dash_app.png)
 
 # Citations
 

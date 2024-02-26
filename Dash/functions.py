@@ -1,14 +1,3 @@
-"""
-Simple Dash app for deploying on personal computer to access the PanPPI data
-For more information see https://github.com/eporetsky/PanPPI
-To run the app, move the app.py and functions.py files and the tmp/ folder to
-    the folder containing all the analysis results (together with the input/ 
-    and output/ folders). When ready, in the terminal run: "python app.py"
-Developed by Elly Poretsky on 01.22.24
-
-Helper functions are imported by the Dash app.py file when started
-"""
-
 import os
 import glob
 import base64
@@ -25,6 +14,8 @@ import dash_bootstrap_components as dbc
 
 import matplotlib
 import matplotlib.pyplot as plt
+from collections import defaultdict
+
 matplotlib.use('agg')
 
 # A function that generates tmp pickle file with the current session_id
@@ -36,20 +27,6 @@ def tmp_write(session_id, name, content):
 def tmp_read(session_id, name):
     with open('tmp/{}_{}.pkl'.format(session_id, name), 'rb') as handle:
         return(pickle.load(handle))
-
-# A function that reads the phytozome gene annotation file and gets the
-# arabidopsis annotation. For multiple isoforms only the first one is returned.
-# Some phytozome annotations might need to be edited to get the function to work.
-def get_phytozome_annotations():  
-    annot = pd.DataFrame()
-    for file_name in glob.glob("output/descriptions/*"):
-        tmp = pd.read_csv(file_name, sep="\t")
-        #tmp = tmp.drop_duplicates(subset="locusName")
-        #tmp = tmp[["locusName", "Best-hit-arabi-name", "Best-hit-arabi-defline"]]
-        #tmp["genotype"] = file_name.split("/")[-1].split(".")[0]
-        #tmp.columns = ["geneID", "best-arabidopsis","annotation-arabidopsis"]
-        annot = pd.concat([annot, tmp])
-    return(annot)
 
 # Get a list of all genotypes, including pan and core, in a given folder
 def get_all_genotypes(folder):
@@ -82,8 +59,8 @@ def get_cluster_df():
             edges_df = edges_df.drop("weight", axis=1)
             cone = pd.read_csv("output/clusters/genomes/{}.cone.csv".format(genotype))
         
-        cone = cone[cone["P-value"]<0.05]
-        cone = cone[cone["Size"]<50]
+        cone = cone[cone["P-value"]<0.1]
+        #cone = cone[cone["Size"]<50]
         tmp = {"clusterID": [], "geneID": []}
         for ix, row in cone.iterrows():
             clusterID = "{}_{}".format(genotype, row["Cluster"])
@@ -94,7 +71,7 @@ def get_cluster_df():
     return(cluster_df)
 
 # Return the GO enrichment results combined dataframe of all selected clusters
-def get_selected_enrichments(candidate_clusters_list, genotype_list):
+def get_selected_enrichments(candidate_clusters_list, candidate_genes_list, genotype_list):
     enrichment_list = glob.glob("output/enrichment/genomes/*")
     enrichment_list += glob.glob("output/enrichment/*")
     enrichment_list.remove('output/enrichment/genomes')
@@ -105,8 +82,38 @@ def get_selected_enrichments(candidate_clusters_list, genotype_list):
             tmp = pd.read_csv(fl, sep="\t")
             tmp["genotype"] = genotype
             df_enrichment = pd.concat([df_enrichment, tmp])
+    
     df_enrichment = df_enrichment[df_enrichment["cluster"].isin(candidate_clusters_list)]
+    
+    # Creates a dictionary that converts cluster IDs to the candidate
+    # genes present in that cluster 
+    if candidate_genes_list:
+        cluster_genes_dict = {}
+        for ix, cluster in enumerate(candidate_clusters_list):
+            cluster_genes_dict[cluster] = candidate_genes_list[ix]
+        df_enrichment["cluster_genes"] = df_enrichment["cluster"].tolist()
+        df_enrichment = df_enrichment.replace({"cluster_genes": cluster_genes_dict})
+
     return(df_enrichment)
+
+# Return the GO enrichment results combined dataframe of all selected clusters
+def get_enrichments_with_GOs(candidate_GOs, genotype_list):
+    enrichment_list = glob.glob("output/enrichment/genomes/*")
+    enrichment_list += glob.glob("output/enrichment/*")
+    enrichment_list.remove('output/enrichment/genomes')
+    df_enrichment = pd.DataFrame()
+    for fl in enrichment_list:
+        genotype = fl.split("/")[-1].split(".")[0]
+        if genotype in genotype_list:
+            tmp = pd.read_csv(fl, sep="\t")
+            tmp["genotype"] = genotype
+            df_enrichment = pd.concat([df_enrichment, tmp])
+    # Extra
+    relevant_clusters = df_enrichment[df_enrichment["term"].isin(candidate_GOs)]
+    relevant_clusters = relevant_clusters.drop_duplicates("cluster")["cluster"].tolist()
+    df_enrichment = df_enrichment[df_enrichment["cluster"].isin(relevant_clusters)]
+    return(df_enrichment, relevant_clusters)
+
 
 # Main function for generating the content of the enrichment tab
 # Returns a dropdown menu for filtering on BP, MF and CC
@@ -126,6 +133,11 @@ def tab_content_enrichment(df, genotype_list):
                     #'overflow': 'hidden',
                     #'textOverflow': 'ellipsis',
                     },
+        #editable=True,
+        filter_action="native",
+        sort_action="native",
+
+        page_size=len(df),
         editable=False,
         row_deletable=False,
         export_format="csv",)
@@ -138,15 +150,74 @@ def tab_content_enrichment(df, genotype_list):
                 searchable=False),
            output_table)
 
-def get_candidate_pan_genes(candidate_genes):
+def get_candidate_pan_genes(candidate_genes, get_all_pangenes):
     with open('input/pangenes/maizegdb.pan.pkl', 'rb') as handle:
         pan_dict = pickle.load(handle)
-    candidate_pan_genes = []
+
+    candidate_pan_genes = {}
     for gene in candidate_genes:
-        try:
-            candidate_pan_genes.append(pan_dict[gene])
-        except:
-            None
+        if gene in pan_dict.keys():
+            pangene_tmp = pan_dict[gene]
+            if pangene_tmp not in candidate_pan_genes.keys():
+                candidate_pan_genes[pangene_tmp] = [gene]
+            else:
+                candidate_pan_genes[pangene_tmp].append(gene)
+    
+    for key in candidate_pan_genes.keys():
+        candidate_pan_genes[key] = ",".join([x+"("+key+")" for x in candidate_pan_genes[key]])
+
+    if get_all_pangenes:
+        reversed_dict = defaultdict(list)
+        for key, value in pan_dict.items():
+            # Skip candidate genes so they don't appear twice
+            if key in candidate_genes:
+                continue
+            reversed_dict[value].append(key)
+
+        candidate_pan_genes_list = list(candidate_pan_genes.keys())
+        for pan_gene in candidate_pan_genes_list:
+            genome_candidate_genes = reversed_dict[pan_gene]
+            if len(genome_candidate_genes) == 0:
+                continue
+            for genome_gene in genome_candidate_genes:
+                candidate_pan_genes[genome_gene] = pan_gene
+
+
+    return(candidate_pan_genes)
+
+def get_candidate_GOs(candidate_genes, get_all_pangenes):
+    with open('input/pangenes/maizegdb.pan.pkl', 'rb') as handle:
+        pan_dict = pickle.load(handle)
+
+    candidate_pan_genes = {}
+    for gene in candidate_genes:
+        if gene in pan_dict.keys():
+            pangene_tmp = pan_dict[gene]
+            if pangene_tmp not in candidate_pan_genes.keys():
+                candidate_pan_genes[pangene_tmp] = [gene]
+            else:
+                candidate_pan_genes[pangene_tmp].append(gene)
+    
+    for key in candidate_pan_genes.keys():
+        candidate_pan_genes[key] = ",".join([x+"("+key+")" for x in candidate_pan_genes[key]])
+
+    if get_all_pangenes:
+        reversed_dict = defaultdict(list)
+        for key, value in pan_dict.items():
+            # Skip candidate genes so they don't appear twice
+            if key in candidate_genes:
+                continue
+            reversed_dict[value].append(key)
+
+        candidate_pan_genes_list = list(candidate_pan_genes.keys())
+        for pan_gene in candidate_pan_genes_list:
+            genome_candidate_genes = reversed_dict[pan_gene]
+            if len(genome_candidate_genes) == 0:
+                continue
+            for genome_gene in genome_candidate_genes:
+                candidate_pan_genes[genome_gene] = pan_gene
+
+
     return(candidate_pan_genes)
 
 def fig_to_uri(in_fig, close_all=True, **save_args):
@@ -165,18 +236,15 @@ def fig_to_uri(in_fig, close_all=True, **save_args):
     return "data:image/png;base64,{}".format(encoded)
 
 def tab_content_network(session_id,
-                        n_clicks_ids=0, 
-                        n_clicks_coexp=0):
+                        n_clicks_ids,):
     candidate_clusters_df = tmp_read(session_id, "clusters")
     if len(candidate_clusters_df)==0:
         return(html.P("No clusters have been identified with the given set of protein IDs."))
     candidate_clusters_list = candidate_clusters_df["clusterID"].unique()
     
-    try:
-        selected_cluster = tmp_read(session_id, "selected_cluster")
-    except:
-        selected_cluster = candidate_clusters_list[0]
-        tmp_write(session_id, "selected_cluster", selected_cluster)
+    # Check if a previous cluster has been selected
+    selected_cluster = tmp_read(session_id, "selected_cluster")
+    
     
     genotype = selected_cluster.split("_")[0]
     if genotype in ["pan", "core"]:
@@ -187,11 +255,10 @@ def tab_content_network(session_id,
     edge_df = edge_df.drop("cluster", axis=1)
     
     show_labels = False if n_clicks_ids % 2 == 0 else True
-    show_coexp = True if n_clicks_coexp % 2 == 0 else False
+    #show_coexp = True if n_clicks_coexp % 2 == 0 else False
 
     return_buttons = [
             dbc.Button("Toggle protein IDs", id="btn_network_ids", color="success", n_clicks=n_clicks_ids),
-            #dbc.Button("Toggle coexpression", id="btn_network_coexpression", color="warning", n_clicks=n_clicks_coexp),
         ]
     
     return_dropdown = dcc.Dropdown(
@@ -200,15 +267,22 @@ def tab_content_network(session_id,
                 value=selected_cluster,
                 multi=False,
                 searchable=True),
+    
+    sim_clust_list = tmp_read(session_id, "sim_clust_list")
+    return_dropdown_similars = dcc.Dropdown(
+                id='dropdown_clusters_similairity',
+                options=[{'label': cluster, 'value': cluster} for cluster in sim_clust_list],
+                value=selected_cluster,
+                multi=False,
+                searchable=True),
 
-    #
     G = nx.from_pandas_edgelist(edge_df, 'source', 'target', 'weight')
     # Use tmp pickle file to make the gene annotation file 
     tmp_write(session_id, "selected_ids", list(G.nodes))
     pos = nx.circular_layout(G)
     edges, weights = zip(*nx.get_edge_attributes(G, 'weight').items())
     # blue: both, red: coexpress, black: PPI
-    weight_colors = {"PPI": "blue", "Coexp": "red", "Both": "black"}
+    weight_colors = {"PPI": "black", "Coexp": "red", "Both": "blue"}
     weights = [weight_colors[w] for w in weights]
 
     fig, (ax1) = plt.subplots(1, 1, figsize=(10, 10), constrained_layout=True)
@@ -231,6 +305,9 @@ def tab_content_network(session_id,
                 dbc.Row(return_dropdown, 
                         justify="center", align="center",
                         style={"width":"60%"}),
+                dbc.Row(return_dropdown_similars, 
+                        justify="center", align="center",
+                        style={"width":"60%"}),
                 dbc.Row([html.Img(src = fig_to_uri(fig))],
                         justify="center", align="center",
                         style={"height": "60%", "width":"60%"})
@@ -248,10 +325,7 @@ def tab_content_annotation(session_id, df):
         columns=[{"name": i, "id": i} for i in df.columns],
         data=df.to_dict('records'),
         style_table={'minWidth': '100%'},
-        #fixed_columns={'headers': True, 'data': 1},
         style_cell={'textAlign': 'left',
-                    #'overflow': 'hidden',
-                    #'textOverflow': 'ellipsis',
                     },
         editable=False,
         row_deletable=False,
