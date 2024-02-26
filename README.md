@@ -1,4 +1,4 @@
-# PhosBoost
+# Maize NAM Pan-PPI Analysis Framework
 
 ## Introduction
 
@@ -52,7 +52,7 @@ Note: Manually change the name of the STRING files so they start with a "genotyp
 Creating conda environment
 ```
 conda create --name ppi
-conda activate ppi
+conda activate panppi
 conda install -c anaconda jupyter 
 pip install pandas numpy seaborn networkx upsetplot matplotlib goatools
 ```
@@ -63,7 +63,21 @@ pip install pandas numpy seaborn networkx upsetplot matplotlib goatools
 python code_workflow.py
 ```
 
-# Citation
+# Running the analysis workflow
+
+We developed a [standalone web-application](https://github.com/eporetsky/PanPPI/tree/main/Dash) using the Python Dash package. Additional details are available within the the linked folder. Briefly, to get the package to run, move the content of the zipped analysis results file into the `Dash/` directory and nevigate in your terminal window to the folder using the following commands: 
+
+```
+conda activate panppi
+cd Dash
+python app.py
+```
+
+Once the Dash PanPPI webapplication is running, access it on your browser through the follwoing link: [http://127.0.0.1:8000/](http://127.0.0.1:8000/).
+
+![screenshot_datainput](dash/img/screenshot_dash_app.png)
+
+# Citations
 
 The manuscript by Poretsky <i>et al.</i> is currently under review.
 
