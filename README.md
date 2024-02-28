@@ -69,6 +69,11 @@ We developed a [standalone web-application](https://github.com/eporetsky/PanPPI/
 ```
 conda activate panppi
 cd Dash
+
+# Create pickles to start the app faster. **Only needs to be ran once**
+python make_pickles.py
+
+# Start the Dash web application
 python app.py
 ```
 
