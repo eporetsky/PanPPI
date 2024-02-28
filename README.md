@@ -47,14 +47,13 @@ Links to the predicted STRING-db accessions:
 
 Note: Manually change the name of the STRING files so they start with a "genotype_ID." prefix. The code assumed that there are no dots in the genotype ID so it would require changing dots to a different character.
 
-# Conda environment
+# Setting up the Mamba (or Conda) environment
 
-Creating conda environment
+Run the following commands:
 ```
-conda create --name ppi
-conda activate panppi
-conda install -c anaconda jupyter 
-pip install pandas numpy seaborn networkx upsetplot matplotlib goatools
+mamba create --name panppi
+mamba activate panppi
+mamba env update --file environments.yml 
 ```
 
 # Running the analysis workflow
@@ -65,7 +64,7 @@ python code_workflow.py
 
 # Running the analysis workflow
 
-We developed a [standalone web-application](https://github.com/eporetsky/PanPPI/tree/main/Dash) using the Python Dash package. Additional details are available within the the linked folder. Briefly, to get the package to run, move the content of the zipped analysis results file into the `Dash/` directory and nevigate in your terminal window to the folder using the following commands: 
+We developed a [standalone web-application](https://github.com/eporetsky/PanPPI/tree/main/Dash) using the Python Dash package. Additional details are available within the the linked folder. Briefly, to get the package to run, move the content of the zipped analysis results file into the `Dash/` directory, nevigate in your terminal window to the folder, and run the following commands: 
 
 ```
 conda activate panppi
@@ -87,4 +86,4 @@ If you are using this workflow please also considering citing:
 * [ClusterONE](https://paccanarolab.org/cluster-one/) for clustering the predicted PPI networks
 * [PyWGCNA](https://github.com/mortazavilab/PyWGCNA/blob/main/PyWGCNA/comparison.py) for comparing cluster overlap
 * [GO Consortium](https://www.geneontology.org/) for the GO annotation
-* [PANZER2](http://ekhidna2.biocenter.helsinki.fi/sanspanz/) that was used for generating the GO annotations for the genomes
+* [PANNZER2](http://ekhidna2.biocenter.helsinki.fi/sanspanz/) that was used for generating the GO annotations for the genomes
