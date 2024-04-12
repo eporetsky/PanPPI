@@ -83,7 +83,7 @@ Once the Dash PanPPI webapplication is running, access it on your browser throug
 
 # Citations
 
-The manuscript by Poretsky <i>et al.</i> is currently under review.
+The open-access PanPPI manuscript is now available in [G3: Genes, Genomes, Genetics](https://academic.oup.com/g3journal/advance-article/doi/10.1093/g3journal/jkae059/7630293).
 
 If you are using this workflow please also considering citing:
 * [MaizeGDB](https://download.maizegdb.org/) for providing the canonical protein sequences
