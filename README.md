@@ -62,7 +62,22 @@ mamba env update --file environments.yml
 python code_workflow.py
 ```
 
-# Running the analysis workflow
+# Running the Dash app
+
+## Option 1:
+
+We have generated a Docker container that has the maize PanPPI data pre-loaded for easy access. If you have Docker installed on your machine, you can get the app running with a single line of code.
+
+```
+# Download and run the Docker container of the PanPPI Dash app with the maize data
+# The Docker container is hosted on: https://hub.docker.com/u/externelly
+docker run --name=panppi -p 8080:8080 externelly/panppi:app
+
+# Open the web-browser and enter the the address:
+# http://0.0.0.0:8080/
+```
+
+## Option 2:
 
 We developed a [standalone web-application](https://github.com/eporetsky/PanPPI/tree/main/Dash) using the Python Dash package. Additional details are available within the the linked folder. Briefly, to get the package to run, move the content of the zipped analysis results file into the `Dash/` directory, nevigate in your terminal window to the folder, and run the following commands: 
 
