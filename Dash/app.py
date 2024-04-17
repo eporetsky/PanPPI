@@ -57,7 +57,7 @@ input_go_list = "GO:0048574\nGO:2000028\nGO:0048573\nGO:0048578\nGO:0048577\nGO:
 with open("pickles/sim_connected_components.pkl", 'rb') as handle:
         sim_cc_list = pickle.load(handle)
 cluster_df = pd.read_pickle("pickles/cluster_df.pkl")
-annots_df = pd.read_pickle("pickles/annots_df_df.pkl")
+annots_df = pd.read_pickle("pickles/annots_df.pkl")
 
 def get_sim_clust_list(selected_cluster):
     # If selected cluster is not in similarity connected component return itself
