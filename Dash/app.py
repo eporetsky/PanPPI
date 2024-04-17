@@ -301,4 +301,4 @@ def update_enrichment_table(ls):
     return(filtered_dt)
 
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=8000, debug=True)
+    app.run_server(host='0.0.0.0', debug=True, port=8080)
