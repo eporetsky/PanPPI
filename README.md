@@ -12,7 +12,7 @@ Links to the data used in the anlaysis:
 * Maize NAM transcriptomic data from [CyVerse](https://datacommons.cyverse.org/browse/iplant/home/maizegdb/maizegdb/MaizeGDB_qTeller_FPKM/NAM_qTeller_FPKM/NAM_Consortium_2021_qTeller_FPKM_unaveraged)
 * Arabidopsis gene description from [arabidopsis.org](https://www.arabidopsis.org/download_files/Public_Data_Releases/TAIR_Data_20220331/Araport11_functional_descriptions_20220331.txt.gz)
 
-Note: All files can currently be downloaded through this [link](https://www.dropbox.com/s/36782l72h53ldbn/PanPPI.zip?dl=0). Last updated: 10/19/23
+Note: All files can currently be downloaded through this [link](https://www.dropbox.com/scl/fi/mb8fcjtxyvkco84fscuko/PanPPI.zip?rlkey=mivtpl6v1gp42fi8blil9hcdl&dl=0). Last updated: 10/19/23
 
 Links to the predicted STRING-db accessions:
 
